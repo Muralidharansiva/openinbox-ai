@@ -1,6 +1,11 @@
 [project]
 name = "openinbox-ai"
 version = "0.1.0"
+description = "OpenEnv Email Triage Environment"
+authors = [
+    { name = "Muralidharan S" }
+]
+
 dependencies = [
     "fastapi",
     "uvicorn",
@@ -8,5 +13,10 @@ dependencies = [
     "openenv-core>=0.2.0"
 ]
 
+# ✅ IMPORTANT — THIS FIXES YOUR ERROR
 [project.scripts]
-server = "server.app:app"
+server = "server.app:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
