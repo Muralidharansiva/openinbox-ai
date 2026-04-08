@@ -8,19 +8,19 @@ def create_app():
 
     @app.get("/")
     def root():
-        return {"status": "running"}
+        return {"status": "ok"}
 
     @app.post("/reset")
     def reset():
-        return env.reset().model_dump()
+        return env.reset()
 
     @app.post("/step")
     def step(action: Action):
-        return env.step(action).model_dump()
+        return env.step(action)
 
     @app.get("/state")
     def state():
-        return env.state().model_dump()
+        return env.state()
 
     return app
 

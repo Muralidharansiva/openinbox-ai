@@ -3,7 +3,7 @@ from typing import List, Optional, Literal
 
 Priority = Literal["low", "medium", "high"]
 Category = Literal["spam", "work", "support", "sales", "other"]
-ActionType = Literal["classify", "prioritize", "respond", "delete", "noop"]
+ActionType = Literal["classify", "prioritize", "respond", "delete"]
 
 class Email(BaseModel):
     id: str
