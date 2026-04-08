@@ -1,54 +1,68 @@
-from env.models import Email, Observation, Action
+from typing import List
+from env.models import Email, Observation, Action, StepResult
 
 class EmailEnv:
-    def __init__(self):
-        self.reset()
+    def __init__(self, max_steps: int = 10):
+        self.max_steps = max_steps
+        self._emails: List[Email] = []
+        self._step = 0
+        self._done = False
+        self._score = 0.0
 
-    def reset(self):
-        self.step_count = 0
-        self.done = False
-        self.score = 0
-        self.emails = self._data()
+    def reset(self) -> Observation:
+        self._step = 0
+        self._done = False
+        self._score = 0.0
+        self._emails = self._generate_emails()
         return self.state()
 
-    def state(self):
-        return Observation(emails=self.emails, step=self.step_count)
+    def state(self) -> Observation:
+        return Observation(emails=self._emails, step_count=self._step)
 
-    def step(self, action: Action):
-        self.step_count += 1
-        reward = 0
+    def step(self, action: Action) -> StepResult:
+        if self._done:
+            return StepResult(observation=self.state(), reward=0.0, done=True, info={})
 
-        for e in self.emails:
-            if e.id == action.email_id:
+        self._step += 1
+        reward = 0.0
 
-                if action.action_type == "classify":
-                    reward += 0.3 if action.predicted_category == e.category else -0.1
+        target = next((e for e in self._emails if e.id == action.email_id), None)
 
-                if action.action_type == "prioritize":
-                    reward += 0.25 if action.predicted_priority == e.priority else -0.1
+        if action.action_type == "classify" and target:
+            reward += 0.3 if action.predicted_category == target.category else -0.1
 
-                if action.action_type == "delete":
-                    reward += 0.3 if e.category == "spam" else -0.2
-                    e.handled = True
+        elif action.action_type == "prioritize" and target:
+            reward += 0.25 if action.predicted_priority == target.priority else -0.1
 
-                if action.action_type == "respond":
-                    reward += 0.3 if e.category != "spam" else -0.2
-                    e.handled = True
+        elif action.action_type == "respond" and target:
+            if target.category != "spam" and action.response_text:
+                reward += 0.3
+                target.handled = True
+            else:
+                reward -= 0.2
 
-        self.score += reward
+        elif action.action_type == "delete" and target:
+            if target.category == "spam":
+                reward += 0.3
+                target.handled = True
+            else:
+                reward -= 0.2
 
-        # better done condition
-        if all(e.handled or e.category == "spam" for e in self.emails):
-            self.done = True
+        if self._step >= self.max_steps:
+            self._done = True
 
-        if self.step_count >= 10:
-            self.done = True
+        self._score += reward
 
-        return self.state(), reward, self.done, {"score": self.score}
+        return StepResult(
+            observation=self.state(),
+            reward=reward,
+            done=self._done,
+            info={"total": self._score}
+        )
 
-    def _data(self):
+    def _generate_emails(self) -> List[Email]:
         return [
-            Email(id="1", subject="Offer", body="Buy now", priority="low", category="spam"),
-            Email(id="2", subject="Meeting", body="Tomorrow", priority="high", category="work"),
-            Email(id="3", subject="Help", body="Login", priority="medium", category="support"),
+            Email(id="1", subject="Buy now", body="Cheap deal", priority="low", category="spam"),
+            Email(id="2", subject="Meeting", body="Team sync", priority="high", category="work"),
+            Email(id="3", subject="Login issue", body="Help needed", priority="medium", category="support"),
         ]
