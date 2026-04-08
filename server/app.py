@@ -1,19 +1,19 @@
-from fastapi import FastAPI
-from env.environment import EmailEnv
-from env.models import Action
+[project]
+name = "openinbox-ai"
+version = "0.1.0"
+description = "AI email triage environment"
+authors = [{name = "MDSon07"}]
 
-app = FastAPI()
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "openenv-core>=0.2.0"
+]
 
-env = EmailEnv()
+[project.scripts]
+server = "server.app:app"
 
-@app.post("/reset")
-def reset():
-    return env.reset()
-
-@app.post("/step")
-def step(action: Action):
-    return env.step(action)
-
-@app.get("/state")
-def state():
-    return env.state()
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
